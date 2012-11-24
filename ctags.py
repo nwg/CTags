@@ -215,6 +215,15 @@ class TagFile(object):
     def __len__(self):
         return os.stat(self.p).st_size
 
+    def get_all(self):
+        with open(self.p, 'r+') as fh:
+            self.fh = mmap.mmap(fh.fileno(), 0)
+
+            for l in fh:
+                yield l
+
+            self.fh.close()
+
     def get(self, *tags):
         with open(self.p, 'r+') as fh:
             self.fh = mmap.mmap(fh.fileno(), 0)
@@ -272,7 +281,12 @@ class TagFile(object):
 
     def get_tags_dict(self, *tags, **kw):
         filters = kw.get('filters', [])
-        return parse_tag_lines( self.get(*tags),
+        if tags:
+            lines = self.get(*tags)
+        else:
+            lines = self.get_all()
+
+        return parse_tag_lines( lines,
                                 tag_class=self.tag_class(), filters=filters)
 
 

@@ -581,13 +581,11 @@ class ShowSymbols(sublime_plugin.TextCommand):
         multi = args.get('type') == 'multi'
         lang = args.get('type') == 'lang'
 
-        files = files_to_search(view, tags_file, multi)
- 
         if lang:
             suffix = get_current_file_suffix(view)
             key = suffix
         else:
-            key = ",".join(files)
+            key = "__all_files__"
 
         tags_file = tags_file + '_sorted_by_file'
 
@@ -597,7 +595,7 @@ class ShowSymbols(sublime_plugin.TextCommand):
         def get_tags():
             loaded = TagFile(tags_file, FILENAME)
             if lang: return loaded.get_tags_dict_by_suffix(suffix, filters=compile_filters(view))
-            else: return loaded.get_tags_dict(*files, filters=compile_filters(view))
+            else: return loaded.get_tags_dict(filters=compile_filters(view))
 
         if key in tags_cache[base_path]:
             print "loading symbols from cache"
@@ -616,11 +614,7 @@ class ShowSymbols(sublime_plugin.TextCommand):
                 sublime.status_message(
                     'No symbols found **FOR CURRENT FILE**; Try Rebuild?' )
 
-        path_cols = (0, ) if len(files) > 1 else ()
-        formatting = functools.partial( format_tag_for_quickopen,
-                                        file = bool(path_cols)  )
-
-        @prepared_4_quickpanel(formatting, path_cols=())
+        @prepared_4_quickpanel(format_tag_for_quickopen, path_cols=())
         def sorted_tags():
             return sorted (
                 chain(*(tags[k] for k in tags)), key=iget('tag_path'))
